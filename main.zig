@@ -9,8 +9,19 @@ fn enableRawMode() !void {
     var term = try std.posix.tcgetattr(tty.handle);
     orig_term = term;
 
-    term.lflag.ICANON = false;
+    // Disable all flags for raw mode.
+    term.iflag.BRKINT = false;
+    term.iflag.IXON = false;
+    term.iflag.ICRNL = false;
+    term.iflag.INPCK = false;
+    term.iflag.ISTRIP = false;
+
+    term.oflag.OPOST = false;
+
     term.lflag.ECHO = false;
+    term.lflag.ICANON = false;
+    term.lflag.IEXTEN = false;
+    term.lflag.ISIG = false;
 
     try std.posix.tcsetattr(tty.handle, std.posix.TCSA.NOW, term);
 }
@@ -33,9 +44,9 @@ pub fn main() !void {
         if (char == 'q') break;
 
         if (std.ascii.isControl(char)) {
-            std.debug.print("{d}\n", .{char});
+            std.debug.print("{d}\r\n", .{char});
         } else {
-            std.debug.print("{d} ('{c}')\n", .{ char, char });
+            std.debug.print("{d} ('{c}')\r\n", .{ char, char });
         }
     } else |_| {}
 
