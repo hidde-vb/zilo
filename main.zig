@@ -23,6 +23,8 @@ fn enableRawMode() !void {
     term.lflag.IEXTEN = false;
     term.lflag.ISIG = false;
 
+    term.cc[@intFromEnum(std.posix.V.MIN)] = 0;
+    term.cc[@intFromEnum(std.posix.V.TIME)] = 1;
     try std.posix.tcsetattr(tty.handle, std.posix.TCSA.NOW, term);
 }
 
@@ -40,15 +42,17 @@ pub fn main() !void {
     var reader = std.fs.File.stdin().reader(&buf);
     const stdin = &reader.interface;
 
-    while (stdin.takeByte()) |char| {
-        if (char == 'q') break;
+    while (true) {
+        const char: u8 = stdin.takeByte() catch 0;
 
         if (std.ascii.isControl(char)) {
             std.debug.print("{d}\r\n", .{char});
         } else {
             std.debug.print("{d} ('{c}')\r\n", .{ char, char });
         }
-    } else |_| {}
+
+        if (char == 'q') break;
+    }
 
     try disableRawMode();
 }
