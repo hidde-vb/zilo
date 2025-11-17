@@ -9,6 +9,7 @@ fn enableRawMode() !void {
     var term = try std.posix.tcgetattr(tty.handle);
     orig_term = term;
 
+    term.lflag.ICANON = false;
     term.lflag.ECHO = false;
 
     try std.posix.tcsetattr(tty.handle, std.posix.TCSA.NOW, term);
@@ -29,9 +30,13 @@ pub fn main() !void {
     const stdin = &reader.interface;
 
     while (stdin.takeByte()) |char| {
-        if (char == 'q') return;
+        if (char == 'q') break;
 
-        std.debug.print("{c}", .{char});
+        if (std.ascii.isControl(char)) {
+            std.debug.print("{d}\n", .{char});
+        } else {
+            std.debug.print("{d} ('{c}')\n", .{ char, char });
+        }
     } else |_| {}
 
     try disableRawMode();
