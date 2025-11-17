@@ -1,16 +1,24 @@
 const std = @import("std");
 
+var orig_term: std.posix.termios = undefined;
+
 fn enableRawMode() !void {
     const tty = try std.fs.openFileAbsolute("/dev/tty", .{ .mode = .read_write });
     defer tty.close();
 
     var term = try std.posix.tcgetattr(tty.handle);
-    // const orig = term;
+    orig_term = term;
 
     term.lflag.ECHO = false;
 
     try std.posix.tcsetattr(tty.handle, std.posix.TCSA.NOW, term);
-    // defer std.posix.tcsetattr(tty.handle, std.posix.TCSA.NOW, orig) catch {};
+}
+
+fn disableRawMode() !void {
+    const tty = try std.fs.openFileAbsolute("/dev/tty", .{ .mode = .read_write });
+    defer tty.close();
+
+    try std.posix.tcsetattr(tty.handle, std.posix.TCSA.NOW, orig_term);
 }
 
 pub fn main() !void {
@@ -25,4 +33,6 @@ pub fn main() !void {
 
         std.debug.print("{c}", .{char});
     } else |_| {}
+
+    try disableRawMode();
 }
