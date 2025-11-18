@@ -23,8 +23,10 @@ fn enableRawMode() !void {
     term.lflag.IEXTEN = false;
     term.lflag.ISIG = false;
 
+    // Set read timeout.
     term.cc[@intFromEnum(std.posix.V.MIN)] = 0;
     term.cc[@intFromEnum(std.posix.V.TIME)] = 1;
+
     try std.posix.tcsetattr(tty.handle, std.posix.TCSA.NOW, term);
 }
 
@@ -35,7 +37,7 @@ fn disableRawMode() !void {
     try std.posix.tcsetattr(tty.handle, std.posix.TCSA.NOW, orig_term);
 }
 
-pub fn main() !void {
+fn mainLoop() !void {
     try enableRawMode();
 
     var buf: [128]u8 = undefined;
@@ -55,4 +57,11 @@ pub fn main() !void {
     }
 
     try disableRawMode();
+}
+
+pub fn main() void {
+    mainLoop() catch |err| {
+        std.log.err("Error: {s}\n", .{@errorName(err)});
+        std.process.exit(1);
+    };
 }
